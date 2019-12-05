@@ -102,11 +102,13 @@ class UsersController extends AbstractController
                 $file = new UploadedFile($file['tmp_name'], $file['name'], $file['type']);
                 $filename = $this->generateUniqueName() . '.' . $file->guessExtension();
                 $file->move(
-                    $this->getTargetDir(),
+                    $this->getTargetDir() . $username->getUser()->getUsername() . '/',
                     $filename
                 );
 
-                $result->setImage('/img/pp/users/'.$filename);
+                unlink(substr($username->getUser()->getImage(), 1));
+
+                $result->setImage('/img/pp/users/' . $username->getUser()->getUsername() . '/' . $filename);
 
                 $entityManager = $this->getDoctrine()->getManager();
                 $entityManager->persist($result);
@@ -154,7 +156,7 @@ class UsersController extends AbstractController
             }
             $token = $tokenGenerator->generateToken();
 
-            try{
+            try {
                 $user->setResetToken($token);
                 $entityManager->flush();
             } catch (\Exception $e) {
@@ -210,20 +212,10 @@ class UsersController extends AbstractController
             $this->addFlash('notice', 'Mot de passe mis à jour');
 
             return $this->redirectToRoute('app_home');
-        }else {
+        } else {
 
             return $this->render('PublicSide/users/reset.html.twig', ['token' => $token]);
         }
 
-    }
-
-    private function generateUniqueName()
-    {
-        return md5(uniqid('', true));
-    }
-
-    private function getTargetDir()
-    {
-        return $this->getParameter('uploads_dir');
     }
 }
